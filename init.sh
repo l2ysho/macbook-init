@@ -178,7 +178,6 @@ CASKS=(
 # Mac App Store apps (no cask exists) — requires `mas`, and you must already
 # be signed into the App Store (mas cannot authenticate for you).
 MAS_APPS=(
-  "634148309:Logic Pro"
   "497799835:Xcode"
   "1549412235:Ethernet Menu"
 )
