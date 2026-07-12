@@ -29,6 +29,7 @@ Safe to re-run — every step checks existing state before making changes.
 - Copies custom scripts from [bin/](bin) into `~/bin` (currently `myip`, `psgrep`, `logic-reset`)
 - Configures git identity (`user.name`/`user.email`, only if not already set)
 - Installs Homebrew (if missing) and updates it
+- Installs Rosetta 2 (if missing, Apple Silicon only) — needed for x86-only apps like `sony-ps-remote-play`
 - Installs Atuin (if missing) via its own installer — not a brew formula, so shell integration in `.zshrc` (`~/.atuin/bin/env`) keeps working
 - Installs nvm (if missing) via its own installer, pinned to v0.40.5 — not a brew formula, so `.zshrc`'s `NVM_DIR`/`nvm.sh` sourcing keeps working
 - Installs CLI tools and apps via `brew` (edit the `FORMULAE`/`CASKS` arrays in [init.sh](init.sh) to customize), then runs `brew cleanup`

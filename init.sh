@@ -107,6 +107,18 @@ else
   fi
 fi
 
+# --- Rosetta 2 -----------------------------------------------------------
+# Needed for x86-only apps (e.g. the sony-ps-remote-play cask) on Apple Silicon.
+
+if [[ "$(uname -m)" == "arm64" ]]; then
+  if arch -x86_64 /usr/bin/true &>/dev/null; then
+    log "Rosetta 2 already installed"
+  else
+    log "Installing Rosetta 2"
+    softwareupdate --install-rosetta --agree-to-license
+  fi
+fi
+
 # --- Atuin -------------------------------------------------------------
 
 if [[ -x "$HOME/.atuin/bin/atuin" ]]; then
