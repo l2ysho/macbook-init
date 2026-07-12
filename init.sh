@@ -231,6 +231,8 @@ defaults write NSGlobalDomain KeyRepeat -int 2
 defaults write NSGlobalDomain InitialKeyRepeat -int 15
 # Keyboard: disable autocorrect
 defaults write NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -bool false
+# Keyboard: F1-F12 act as standard function keys by default (use Fn+F1..F12 for brightness/volume/etc.)
+defaults write NSGlobalDomain com.apple.keyboard.fnState -bool true
 
 # Dock: enable icon magnification on hover
 defaults write com.apple.dock magnification -bool true
