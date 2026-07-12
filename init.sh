@@ -10,8 +10,40 @@ set -euo pipefail
 # Prints a bold blue "==> message" section header.
 log() { printf '\n\033[1;34m==>\033[0m %s\n' "$1"; }
 
-# Directory this script lives in, so bin/ can be found regardless of cwd.
-REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# --- Xcode Command Line Tools ---------------------------------------------
+# Needed before anything below that touches git (including cloning this repo
+# below, when run via curl).
+
+if xcode-select -p &>/dev/null; then
+  log "Xcode Command Line Tools already installed"
+else
+  log "Installing Xcode Command Line Tools"
+  xcode-select --install
+
+  until xcode-select -p &>/dev/null; do
+    sleep 5
+  done
+fi
+
+# --- Repo location -------------------------------------------------------
+# When run locally (./init.sh), bin/ lives next to this script. When run via
+# `curl | bash`, there's no script file on disk, so clone the repo instead.
+
+REPO_URL="https://github.com/l2ysho/macbook-init.git"
+SCRIPT_PATH="${BASH_SOURCE[0]:-}"
+
+if [[ -n "$SCRIPT_PATH" && -f "$SCRIPT_PATH" ]]; then
+  REPO_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
+else
+  REPO_DIR="$HOME/.macbook-init"
+  if [[ -d "$REPO_DIR/.git" ]]; then
+    log "Updating macbook-init checkout"
+    git -C "$REPO_DIR" pull --quiet
+  else
+    log "Cloning macbook-init"
+    git clone --quiet "$REPO_URL" "$REPO_DIR"
+  fi
+fi
 
 # --- Directories -------------------------------------------------------------
 
@@ -28,19 +60,6 @@ for script in "$REPO_DIR"/bin/*; do
   chmod +x "$HOME/bin/$name"
   echo "  - $name"
 done
-
-# --- Xcode Command Line Tools ---------------------------------------------
-
-if xcode-select -p &>/dev/null; then
-  log "Xcode Command Line Tools already installed"
-else
-  log "Installing Xcode Command Line Tools"
-  xcode-select --install
-
-  until xcode-select -p &>/dev/null; do
-    sleep 5
-  done
-fi
 
 # --- Git identity -----------------------------------------------------------
 
@@ -150,6 +169,9 @@ for cask in "${CASKS[@]+"${CASKS[@]}"}"; do
   fi
 done
 
+log "Cleaning up Homebrew"
+brew cleanup
+
 # --- Mac App Store apps ------------------------------------------------------
 
 log "Installing Mac App Store apps"
@@ -185,6 +207,8 @@ defaults write com.apple.finder ShowStatusBar -bool true
 defaults write com.apple.finder FXPreferredViewStyle -string "Nlsv"
 # Finder: empty Trash automatically after 30 days
 defaults write com.apple.finder FXRemoveOldTrashItems -bool true
+# Finder: don't warn when changing a file's extension
+defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false
 
 # Keyboard: faster key repeat rate
 defaults write NSGlobalDomain KeyRepeat -int 2
@@ -196,6 +220,8 @@ defaults write NSGlobalDomain NSAutomaticSpellingCorrectionEnabled -bool false
 # Dock: enable icon magnification on hover
 defaults write com.apple.dock magnification -bool true
 defaults write com.apple.dock largesize -int 70
+# Dock: don't auto-rearrange Spaces by most recent use
+defaults write com.apple.dock mru-spaces -bool false
 
 # Trackpad: enable three-finger drag
 defaults write com.apple.AppleMultitouchTrackpad TrackpadThreeFingerDrag -bool true
@@ -204,6 +230,8 @@ defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadThreeF
 # Screenshots: save to ~/Screenshots instead of Desktop
 mkdir -p "$HOME/Screenshots"
 defaults write com.apple.screencapture location -- "$HOME/Screenshots"
+# Screenshots: no drop shadow around captured windows
+defaults write com.apple.screencapture disable-shadow -bool true
 
 for app in Finder Dock SystemUIServer; do
   killall "$app" &>/dev/null || true
