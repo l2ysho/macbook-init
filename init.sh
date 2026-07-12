@@ -145,6 +145,15 @@ else
   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.5/install.sh | bash
 fi
 
+# --- Claude Code -----------------------------------------------------------
+
+if command -v claude &>/dev/null; then
+  log "Claude Code already installed"
+else
+  log "Installing Claude Code"
+  curl -fsSL https://claude.ai/install.sh | bash
+fi
+
 # --- Packages ------------------------------------------------------------
 
 FORMULAE=(
@@ -168,6 +177,7 @@ CASKS=(
   orbstack
   slack
   spotify
+  steam
   warp
   zed
   zoom
