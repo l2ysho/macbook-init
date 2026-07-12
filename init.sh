@@ -265,7 +265,7 @@ defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadThreeF
 
 # Screenshots: save to ~/Screenshots instead of Desktop
 mkdir -p "$HOME/Screenshots"
-defaults write com.apple.screencapture location -- "$HOME/Screenshots"
+defaults write com.apple.screencapture location "$HOME/Screenshots"
 # Screenshots: no drop shadow around captured windows
 defaults write com.apple.screencapture disable-shadow -bool true
 
