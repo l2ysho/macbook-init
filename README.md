@@ -33,6 +33,7 @@ Safe to re-run — every step checks existing state before making changes.
 - Installs Atuin (if missing) via its own installer — not a brew formula, so shell integration in `.zshrc` (`~/.atuin/bin/env`) keeps working
 - Installs nvm (if missing) via its own installer, pinned to v0.40.5 — not a brew formula, so `.zshrc`'s `NVM_DIR`/`nvm.sh` sourcing keeps working
 - Installs Claude Code (if missing) via its own installer
+- Creates `~/.claude-work` and adds a `claude-work` alias (`CLAUDE_CONFIG_DIR=~/.claude-work claude`) to `.zshrc` if it isn't already there — just the folder/alias for now, contents (`CLAUDE.md`, `settings.json`, custom skills) still to be added
 - Installs CLI tools and apps via `brew` (edit the `FORMULAE`/`CASKS` arrays in [init.sh](init.sh) to customize), then runs `brew cleanup`
 - Installs Mac App Store apps via `mas` (edit `MAS_APPS`) — requires you to already be signed into the App Store; if a specific app fails to install, sign in and re-run (recent `mas` versions can't pre-check sign-in status, so it just attempts each install directly)
 - Applies macOS defaults: Finder (hidden files, extensions, path/status bar, list view, auto-empty Trash, no extension-change warning), keyboard (faster repeat, autocorrect off, F1-F12 as standard function keys), Dock (icon magnification, no auto-rearranging Spaces), trackpad (three-finger drag), screenshots saved to `~/Screenshots` with no drop shadow

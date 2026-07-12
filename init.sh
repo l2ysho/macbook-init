@@ -154,6 +154,15 @@ else
   curl -fsSL https://claude.ai/install.sh | bash
 fi
 
+mkdir -p "$HOME/.claude-work"
+
+if ! grep -q "alias claude-work=" "$HOME/.zshrc" 2>/dev/null; then
+  echo "  - adding claude-work alias to .zshrc"
+  echo "alias claude-work='CLAUDE_CONFIG_DIR=~/.claude-work claude'" >> "$HOME/.zshrc"
+else
+  echo "  - claude-work alias already in .zshrc"
+fi
+
 # --- Packages ------------------------------------------------------------
 
 FORMULAE=(
