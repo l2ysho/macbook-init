@@ -75,6 +75,13 @@ for script in "$REPO_DIR"/bin/*; do
   echo "  - $name"
 done
 
+if ! grep -q 'export PATH="\$HOME/bin:\$PATH"' "$HOME/.zshrc" 2>/dev/null; then
+  echo "  - adding ~/bin to PATH in .zshrc"
+  echo 'export PATH="$HOME/bin:$PATH"' >> "$HOME/.zshrc"
+else
+  echo "  - ~/bin already on PATH in .zshrc"
+fi
+
 # --- Git identity -----------------------------------------------------------
 
 log "Configuring git identity"
