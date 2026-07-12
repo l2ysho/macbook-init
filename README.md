@@ -24,6 +24,7 @@ Safe to re-run — every step checks existing state before making changes.
 ## What it does
 
 - Installs Xcode Command Line Tools (if missing)
+- Accepts the Xcode/SDK license (`sudo`, may prompt for your password) — needed even when CLT is already installed, since it's tracked separately and blocks git otherwise
 - Clones this repo to `~/.macbook-init` (only when run via the `curl` one-liner, since there's no local checkout to read `bin/` from otherwise; re-running pulls the latest)
 - Creates `~/Work/personal` and `~/bin`
 - Copies custom scripts from [bin/](bin) into `~/bin` (currently `myip`, `psgrep`, `logic-reset`) and adds `~/bin` to `PATH` in `.zshrc` if it isn't already there (open a new terminal for this to take effect)

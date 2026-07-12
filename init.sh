@@ -39,6 +39,15 @@ else
   done
 fi
 
+# --- Xcode license -----------------------------------------------------
+# Having the Command Line Tools installed doesn't mean the Xcode/SDK license
+# has been accepted (happens once Xcode.app is also present). Until it is,
+# anything backed by Xcode — including git, used right below — blocks on an
+# interactive license prompt. Accepting is a no-op if already accepted.
+
+log "Accepting Xcode license"
+sudo xcodebuild -license accept
+
 # --- Repo location -------------------------------------------------------
 # When run locally (./init.sh), bin/ lives next to this script. When run via
 # `curl | bash`, there's no script file on disk, so clone the repo instead.
