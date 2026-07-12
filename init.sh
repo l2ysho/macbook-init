@@ -288,6 +288,10 @@ defaults write com.apple.dock mru-spaces -bool false
 # Trackpad: enable three-finger drag
 defaults write com.apple.AppleMultitouchTrackpad TrackpadThreeFingerDrag -bool true
 defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadThreeFingerDrag -bool true
+# Trackpad: four-finger swipe down for App Exposé (all windows of the current app), up for Mission Control
+defaults write com.apple.AppleMultitouchTrackpad TrackpadFourFingerVertSwipeGesture -int 2
+defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadFourFingerVertSwipeGesture -int 2
+defaults write com.apple.dock showAppExposeGestureEnabled -bool true
 
 # Screenshots: save to ~/Screenshots instead of Desktop
 mkdir -p "$HOME/Screenshots"
