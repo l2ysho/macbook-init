@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+#
+# List local IP addresses per network interface.
+# Example: myip
+#   INTERFACE  IP
+#   ---------  -------------
+#   en0        192.168.1.23
+
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+  echo "Usage: myip"
+  echo "List each active network interface and its local IP address."
+  exit 0
+fi
+
+printf "%-10s %s\n" "INTERFACE" "IP"
+printf "%-10s %s\n" "---------" "-------------"
+
+for iface in $(ifconfig -l); do
+  ip=$(ipconfig getifaddr "$iface" 2>/dev/null)
+  if [ -n "$ip" ]; then
+    printf "%-10s %s\n" "$iface" "$ip"
+  fi
+done

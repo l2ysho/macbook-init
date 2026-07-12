@@ -1,0 +1,18 @@
+#!/bin/bash
+#
+# Find running processes by name.
+# Example: psgrep code
+#   PID    PPID   COMMAND
+#   512    1      /Applications/Visual Studio Code.app/Contents/MacOS/Electron
+
+if [[ "$1" == "-h" || "$1" == "--help" || -z "$1" ]]; then
+  echo "Usage: psgrep <name>"
+  echo "Find running processes whose command line matches <name> (case-insensitive)."
+  exit 0
+fi
+
+# List all processes (pid, parent pid, full command), keep lines matching
+# $1 (case-insensitive), drop the grep call's own match, then reformat into
+# padded columns. substr($0, index($0, $3)) prints from the command's start
+# to the end of the line, so paths/args with spaces aren't cut off.
+ps -eo pid,ppid,command | grep -i "$1" | grep -v grep | awk '{printf "%-8s %-8s %s\n", $1, $2, substr($0, index($0, $3))}'
