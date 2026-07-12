@@ -5,8 +5,13 @@ Bootstrap script for setting up a fresh Mac.
 ## Usage
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/l2ysho/macbook-init/main/init.sh | bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/l2ysho/macbook-init/main/init.sh)"
 ```
+
+Note: use this form, not `curl ... | bash`. Piping ties the script's stdin to the
+network stream, so anything downstream that reads stdin (a sudo prompt, an
+installer) can desync bash mid-script. `bash -c "$(curl ...)"` downloads the whole
+script first, keeping stdin attached to your real terminal.
 
 Or, if you already have this repo cloned:
 
