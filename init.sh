@@ -113,7 +113,8 @@ if [[ -x "$HOME/.atuin/bin/atuin" ]]; then
   log "Atuin already installed"
 else
   log "Installing Atuin"
-  curl --proto '=https' --tlsv1.2 -LsSf https://setup.atuin.sh | sh
+  # --non-interactive: skip the history-import and sync-signup prompts (no to both).
+  curl --proto '=https' --tlsv1.2 -LsSf https://setup.atuin.sh | sh -s -- --non-interactive
 fi
 
 # --- nvm -----------------------------------------------------------------
