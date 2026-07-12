@@ -21,7 +21,7 @@ Safe to re-run — every step checks existing state before making changes.
 - Installs Xcode Command Line Tools (if missing)
 - Clones this repo to `~/.macbook-init` (only when run via the `curl` one-liner, since there's no local checkout to read `bin/` from otherwise; re-running pulls the latest)
 - Creates `~/Work/personal` and `~/bin`
-- Copies custom scripts from [bin/](bin) into `~/bin` (currently `myip`, `psgrep`)
+- Copies custom scripts from [bin/](bin) into `~/bin` (currently `myip`, `psgrep`, `logic-reset`)
 - Configures git identity (`user.name`/`user.email`, only if not already set)
 - Installs Homebrew (if missing) and updates it
 - Installs Atuin (if missing) via its own installer — not a brew formula, so shell integration in `.zshrc` (`~/.atuin/bin/env`) keeps working

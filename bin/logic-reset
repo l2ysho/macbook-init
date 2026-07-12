@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+#
+# Reset Logic Pro's user data by moving it to Trash.
+# Example: logic-reset
+#   ~/Library/Application Support/.lpxuserdata -> ~/.Trash
+
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+  echo "Usage: logic-reset"
+  echo "Move Logic Pro's .lpxuserdata file to Trash, resetting its user data."
+  exit 0
+fi
+
+mv -v ~/Library/Application\ Support/.lpxuserdata ~/.Trash

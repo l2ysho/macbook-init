@@ -18,7 +18,21 @@ if xcode-select -p &>/dev/null; then
   log "Xcode Command Line Tools already installed"
 else
   log "Installing Xcode Command Line Tools"
-  xcode-select --install
+
+  # Placeholder file that makes softwareupdate treat this as an unattended
+  # background install instead of popping the interactive GUI dialog.
+  CLT_PLACEHOLDER="/tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress"
+  touch "$CLT_PLACEHOLDER"
+  CLT_PACKAGE="$(softwareupdate -l 2>/dev/null | grep -B 1 "Command Line Tools" | awk -F'* ' '/^ *\*/ {print $2}' | tail -n1)"
+
+  if [[ -n "$CLT_PACKAGE" ]]; then
+    softwareupdate -i "$CLT_PACKAGE"
+  else
+    echo "  - couldn't find Command Line Tools in the softwareupdate catalog, falling back to interactive install"
+    xcode-select --install
+  fi
+
+  rm -f "$CLT_PLACEHOLDER"
 
   until xcode-select -p &>/dev/null; do
     sleep 5
