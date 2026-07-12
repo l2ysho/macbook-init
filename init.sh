@@ -210,20 +210,19 @@ brew cleanup
 
 log "Installing Mac App Store apps"
 
-if ! mas account &>/dev/null; then
-  echo "  - not signed into the App Store, skipping (sign in via the App Store app, then re-run)"
-else
-  for entry in "${MAS_APPS[@]+"${MAS_APPS[@]}"}"; do
-    id="${entry%%:*}"
-    name="${entry#*:}"
-    if mas list | grep -q "^$id "; then
-      echo "  - $name already installed"
-    else
-      echo "  - installing $name"
-      mas install "$id"
-    fi
-  done
-fi
+# Recent mas versions dropped the `account` command (Apple restricted the
+# underlying API), so there's no reliable way to pre-check sign-in status.
+# Just attempt each install; mas itself reports if you're not signed in.
+for entry in "${MAS_APPS[@]+"${MAS_APPS[@]}"}"; do
+  id="${entry%%:*}"
+  name="${entry#*:}"
+  if mas list | grep -q "^$id "; then
+    echo "  - $name already installed"
+  else
+    echo "  - installing $name"
+    mas install "$id" || echo "    failed — make sure you're signed into the App Store, then re-run"
+  fi
+done
 
 # --- macOS defaults --------------------------------------------------------
 
