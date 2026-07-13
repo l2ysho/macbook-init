@@ -26,7 +26,7 @@ Safe to re-run — every step checks existing state before making changes.
 - Installs Xcode Command Line Tools (if missing)
 - Accepts the Xcode/SDK license (`sudo`, may prompt for your password) — needed even when CLT is already installed, since it's tracked separately and blocks git otherwise
 - Clones this repo to `~/.macbook-init` (only when run via the `curl` one-liner, since there's no local checkout to read `bin/` from otherwise; re-running pulls the latest)
-- Creates `~/Work/personal` and `~/bin`
+- Creates `~/Work/personal`, `~/bin`, and `~/.ssh` (mode `700`)
 - Copies custom scripts from [bin/](bin) into `~/bin` (currently `myip`, `psgrep`, `logic-reset`) and adds `~/bin` to `PATH` in `.zshrc` if it isn't already there (open a new terminal for this to take effect)
 - Configures git identity (`user.name`/`user.email`, only if not already set)
 - Installs Homebrew (if missing) and updates it
@@ -37,5 +37,5 @@ Safe to re-run — every step checks existing state before making changes.
 - Creates `~/.claude-work` and adds a `claude-work` alias (`CLAUDE_CONFIG_DIR=~/.claude-work claude`) to `.zshrc` if it isn't already there — just the folder/alias for now, contents (`CLAUDE.md`, `settings.json`, custom skills) still to be added
 - Installs CLI tools and apps via `brew` (edit the `FORMULAE`/`CASKS` arrays in [init.sh](init.sh) to customize), then runs `brew cleanup`
 - Installs Mac App Store apps via `mas` (edit `MAS_APPS`) — requires you to already be signed into the App Store; if a specific app fails to install, sign in and re-run (recent `mas` versions can't pre-check sign-in status, so it just attempts each install directly)
-- Applies macOS defaults: Finder (hidden files, extensions, path/status bar, list view, auto-empty Trash, no extension-change warning), keyboard (faster repeat, autocorrect off, F1-F12 as standard function keys), Dock (icon magnification, no auto-rearranging Spaces), trackpad (three-finger drag, four-finger swipe down for App Exposé), screenshots saved to `~/Screenshots` with no drop shadow
+- Applies macOS defaults: Finder (hidden files, extensions, path/status bar, list view, auto-empty Trash, no extension-change warning), keyboard (faster repeat, autocorrect off, F1-F12 as standard function keys), Dock (icon magnification, no auto-rearranging Spaces), trackpad (three-finger drag, four-finger swipe down for App Exposé), menu bar (Bluetooth status shown), screenshots saved to `~/Screenshots` with no drop shadow
   - Most of these apply immediately (the script restarts Finder/Dock/SystemUIServer). The trackpad settings are cached at login by a lower-level system daemon, though — `killall` isn't enough for them, you need to log out and back in (or restart) before they take effect

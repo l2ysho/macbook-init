@@ -73,6 +73,8 @@ fi
 log "Creating directories"
 mkdir -p "$HOME/Work/personal"
 mkdir -p "$HOME/bin"
+mkdir -p "$HOME/.ssh"
+chmod 700 "$HOME/.ssh"
 
 # --- Custom scripts ----------------------------------------------------------
 
@@ -299,7 +301,10 @@ defaults write com.apple.screencapture location "$HOME/Screenshots"
 # Screenshots: no drop shadow around captured windows
 defaults write com.apple.screencapture disable-shadow -bool true
 
-for app in Finder Dock SystemUIServer; do
+# Menu bar: show Bluetooth status
+defaults write com.apple.controlcenter "NSStatusItem Visible Bluetooth" -bool true
+
+for app in Finder Dock SystemUIServer ControlCenter; do
   killall "$app" &>/dev/null || true
 done
 
