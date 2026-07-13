@@ -158,11 +158,21 @@ fi
 
 # --- Claude Code -----------------------------------------------------------
 
-if command -v claude &>/dev/null; then
+if command -v claude &>/dev/null || [[ -x "$HOME/.local/bin/claude" ]]; then
   log "Claude Code already installed"
 else
   log "Installing Claude Code"
   curl -fsSL https://claude.ai/install.sh | bash
+fi
+
+# The native installer puts claude in ~/.local/bin, which isn't on PATH by
+# default — without this, the command -v check above can't find it on
+# re-run and `claude` won't resolve in new shells either.
+if ! grep -q 'export PATH="\$HOME/.local/bin:\$PATH"' "$HOME/.zshrc" 2>/dev/null; then
+  echo "  - adding ~/.local/bin to PATH in .zshrc"
+  echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.zshrc"
+else
+  echo "  - ~/.local/bin already on PATH in .zshrc"
 fi
 
 mkdir -p "$HOME/.claude-work"

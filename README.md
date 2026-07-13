@@ -33,7 +33,7 @@ Safe to re-run — every step checks existing state before making changes.
 - Installs Rosetta 2 (if missing, Apple Silicon only) — needed for x86-only apps like `sony-ps-remote-play`
 - Installs Atuin (if missing) via its own installer — not a brew formula, so shell integration in `.zshrc` (`~/.atuin/bin/env`) keeps working
 - Installs nvm (if missing) via its own installer, pinned to v0.40.5 — not a brew formula, so `.zshrc`'s `NVM_DIR`/`nvm.sh` sourcing keeps working
-- Installs Claude Code (if missing) via its own installer
+- Installs Claude Code (if missing) via its own installer and adds `~/.local/bin` to `PATH` in `.zshrc` if it isn't already there — the native installer puts `claude` there, which isn't on PATH by default
 - Creates `~/.claude-work` and adds a `claude-work` alias (`CLAUDE_CONFIG_DIR=~/.claude-work claude`) to `.zshrc` if it isn't already there — just the folder/alias for now, contents (`CLAUDE.md`, `settings.json`, custom skills) still to be added
 - Installs CLI tools and apps via `brew` (edit the `FORMULAE`/`CASKS` arrays in [init.sh](init.sh) to customize), then runs `brew cleanup`
 - Installs Mac App Store apps via `mas` (edit `MAS_APPS`) — requires you to already be signed into the App Store; if a specific app fails to install, sign in and re-run (recent `mas` versions can't pre-check sign-in status, so it just attempts each install directly)
