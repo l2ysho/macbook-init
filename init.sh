@@ -192,10 +192,11 @@ else
   echo "  - HIST_IGNORE_SPACE already in .zshrc"
 fi
 
-# Route Claude Code through OpenRouter. Needs $OPENROUTER_API_KEY set elsewhere.
+# Route Claude Code through OpenRouter. Needs $OPENROUTER_API_KEY and
+# $OPENROUTER_MODEL (e.g. cohere/north-mini-code:free) set elsewhere.
 if ! grep -q "alias claude-or=" "$HOME/.zshrc" 2>/dev/null; then
   echo "  - adding claude-or alias to .zshrc"
-  echo "alias claude-or='ANTHROPIC_BASE_URL=https://openrouter.ai/api ANTHROPIC_AUTH_TOKEN=\$OPENROUTER_API_KEY ANTHROPIC_API_KEY= ANTHROPIC_MODEL=cohere/north-mini-code CLAUDE_CODE_SKIP_FAST_MODE_ORG_CHECK=1 claude'" >> "$HOME/.zshrc"
+  echo "alias claude-or='ANTHROPIC_BASE_URL=https://openrouter.ai/api ANTHROPIC_AUTH_TOKEN=\$OPENROUTER_API_KEY ANTHROPIC_API_KEY= ANTHROPIC_MODEL=\$OPENROUTER_MODEL CLAUDE_CODE_SKIP_FAST_MODE_ORG_CHECK=1 claude'" >> "$HOME/.zshrc"
 else
   echo "  - claude-or alias already in .zshrc"
 fi
@@ -221,6 +222,7 @@ fi
 
 FORMULAE=(
   gh
+  gitleaks
   pyenv
   python@3.12
   xcodes

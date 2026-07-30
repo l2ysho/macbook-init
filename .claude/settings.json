@@ -1,0 +1,18 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(git push*)",
+            "command": "command -v gitleaks >/dev/null 2>&1 || { echo 'pre-push: gitleaks not installed (brew install gitleaks) — blocking push until secrets can be verified.' >&2; exit 2; }\ngitleaks git --no-banner --redact \"$(git rev-parse --show-toplevel)\" >&2 || { echo 'pre-push: gitleaks flagged a potential secret above — push blocked. Remove it, or allowlist in .gitleaks.toml if it is a false positive.' >&2; exit 2; }",
+            "statusMessage": "Scanning for secrets (gitleaks)…",
+            "timeout": 120
+          }
+        ]
+      }
+    ]
+  }
+}
