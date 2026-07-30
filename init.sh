@@ -184,6 +184,39 @@ else
   echo "  - claude-work alias already in .zshrc"
 fi
 
+# Keep commands starting with a space out of history (handy for secrets).
+if ! grep -q "setopt HIST_IGNORE_SPACE" "$HOME/.zshrc" 2>/dev/null; then
+  echo "  - adding HIST_IGNORE_SPACE to .zshrc"
+  echo 'setopt HIST_IGNORE_SPACE' >> "$HOME/.zshrc"
+else
+  echo "  - HIST_IGNORE_SPACE already in .zshrc"
+fi
+
+# Route Claude Code through OpenRouter. Needs $OPENROUTER_API_KEY set elsewhere.
+if ! grep -q "alias claude-or=" "$HOME/.zshrc" 2>/dev/null; then
+  echo "  - adding claude-or alias to .zshrc"
+  echo "alias claude-or='ANTHROPIC_BASE_URL=https://openrouter.ai/api ANTHROPIC_AUTH_TOKEN=\$OPENROUTER_API_KEY ANTHROPIC_API_KEY= ANTHROPIC_MODEL=cohere/north-mini-code CLAUDE_CODE_SKIP_FAST_MODE_ORG_CHECK=1 claude'" >> "$HOME/.zshrc"
+else
+  echo "  - claude-or alias already in .zshrc"
+fi
+
+# rm-history [n]: delete the last n commands (default 1) from atuin + zsh history.
+if ! grep -q "rm-history()" "$HOME/.zshrc" 2>/dev/null; then
+  echo "  - adding rm-history function to .zshrc"
+  cat >> "$HOME/.zshrc" <<'EOF'
+rm-history() {
+  local n=${1:-1}
+  atuin search --limit "$n" --cmd-only | while IFS= read -r c; do
+    atuin search --delete --search-mode full-text "$c"
+  done
+  tail -r "$HOME/.zsh_history" | tail -n +"$((n + 1))" | tail -r > "$HOME/.zsh_history.tmp" \
+    && mv "$HOME/.zsh_history.tmp" "$HOME/.zsh_history" && fc -R "$HOME/.zsh_history"
+}
+EOF
+else
+  echo "  - rm-history function already in .zshrc"
+fi
+
 # --- Packages ------------------------------------------------------------
 
 FORMULAE=(
