@@ -1,0 +1,205 @@
+#!/usr/bin/env bash
+# yt2midi - YouTube link in, isolated stem + MIDI transcription out.
+#
+# Defaults to drums; -i selects another stem (only drums is verified — whether
+# MuScriptor transcribes bass/vocals/other depends on its model).
+#
+# Usage:
+#   yt2midi [-i INSTRUMENT] <youtube-url> [output-base-dir]  - run the pipeline
+#   yt2midi ps                                               - list pipeline procs
+#   yt2midi kill                                             - kill pipeline procs
+#   yt2midi clean [--purge-cache]                            - clean leftovers/caches
+#   yt2midi help                                             - show this message
+#
+# Produces, in <output-base-dir>/<song title>/ (default base ~/Transcriptions):
+#   original.wav     - full downloaded track
+#   <stem>.wav       - isolated stem (Demucs), e.g. drums.wav
+#   no_<stem>.wav    - everything except that stem (Demucs)
+#   <stem>.mid       - transcription with velocity + detected tempo
+#
+# Requires: yt-dlp, demucs, muscriptor, uv (see scripts/setup-transcribe.sh)
+
+set -euo pipefail
+
+PATTERN="demucs|muscriptor|yt-dlp|ffmpeg"
+
+usage() {
+  echo "Usage:"
+  echo "  yt2midi [-i INSTRUMENT] <youtube-url> [output-base-dir]   (default instrument: drums)"
+  echo "  yt2midi ps"
+  echo "  yt2midi kill"
+  echo "  yt2midi clean [--purge-cache]"
+}
+
+cmd_ps() {
+  ps aux | grep -iE "$PATTERN" | grep -v grep || echo "Nothing running."
+}
+
+cmd_kill() {
+  local pids
+  pids=$(ps aux | grep -iE "$PATTERN" | grep -v grep | awk '{print $2}')
+  if [ -z "$pids" ]; then
+    echo "Nothing to kill."
+    return 0
+  fi
+  echo "Killing PIDs: $pids"
+  echo "$pids" | xargs kill
+}
+
+cmd_clean() {
+  local purge_cache=0
+  if [ "${1:-}" == "--purge-cache" ]; then
+    purge_cache=1
+  fi
+
+  echo "== Leftover files in current directory =="
+  local found=0
+  for f in separated raw.mid; do
+    if [ -e "$f" ]; then
+      found=1
+      du -sh "$f" 2>/dev/null
+    fi
+  done
+  if [ "$found" -eq 1 ]; then
+    read -r -p "Delete these leftover files/folders? [y/N] " ans
+    if [[ "$ans" =~ ^[Yy]$ ]]; then
+      rm -rf separated raw.mid
+      echo "Removed."
+    fi
+  else
+    echo "Nothing found."
+  fi
+
+  echo ""
+  echo "== Model / tool caches =="
+  du -sh "$HOME/.cache/huggingface" 2>/dev/null || true
+  du -sh "$HOME/.cache/torch" 2>/dev/null || true
+  du -sh "$HOME/.local/share/uv" 2>/dev/null || true
+
+  if [ "$purge_cache" -eq 1 ]; then
+    read -r -p "Delete the above caches too? This forces re-downloading models next run. [y/N] " ans
+    if [[ "$ans" =~ ^[Yy]$ ]]; then
+      rm -rf "$HOME/.cache/huggingface" "$HOME/.cache/torch"
+      echo "Caches removed. (uv tool environments left alone - remove individual tools with 'uv tool uninstall <name>' if needed.)"
+    fi
+  else
+    echo "(pass --purge-cache to also be offered deletion of these)"
+  fi
+}
+
+run_pipeline() {
+  local STEM="drums"
+  while [[ "${1:-}" == -* ]]; do
+    case "$1" in
+      -i|--instrument) STEM="${2:?-i needs an instrument name}"; shift 2 ;;
+      *) echo "Unknown option: $1" >&2; usage; exit 1 ;;
+    esac
+  done
+
+  local URL="${1:?youtube url required}"
+  local OUTBASE="${2:-$HOME/Transcriptions}"
+
+  for bin in yt-dlp demucs muscriptor uv; do
+    if ! command -v "$bin" &>/dev/null; then
+      echo "Missing '$bin' on PATH. Run scripts/setup-transcribe.sh first." >&2
+      exit 1
+    fi
+  done
+
+  local WORKDIR
+  WORKDIR=$(mktemp -d)
+  # Bake the path in now: WORKDIR is function-local, but EXIT fires in global
+  # scope where it's gone — a lazy 'rm -rf "$WORKDIR"' would fail under set -u.
+  trap "rm -rf '$WORKDIR'" EXIT
+
+  echo "==> Fetching title..."
+  local TITLE SAFE_TITLE DEST
+  TITLE=$(yt-dlp --skip-download --print "%(title)s" "$URL" | tr -d '\r')
+  SAFE_TITLE=$(echo "$TITLE" | tr -c '[:alnum:] _-' '_' | sed 's/ *$//')
+  DEST="$OUTBASE/$SAFE_TITLE"
+  mkdir -p "$DEST"
+  echo "    -> $TITLE"
+
+  echo "==> Downloading audio..."
+  yt-dlp -x --audio-format wav -o "$WORKDIR/original.%(ext)s" "$URL"
+  cp "$WORKDIR/original.wav" "$DEST/original.wav"
+
+  echo "==> Separating '$STEM' with Demucs..."
+  demucs --two-stems="$STEM" -o "$WORKDIR/separated" "$WORKDIR/original.wav"
+
+  local STEM_DIR
+  STEM_DIR=$(find "$WORKDIR/separated" -mindepth 2 -maxdepth 2 -type d | head -n1)
+  cp "$STEM_DIR/$STEM.wav" "$DEST/$STEM.wav"
+  cp "$STEM_DIR/no_$STEM.wav" "$DEST/no_$STEM.wav"
+
+  echo "==> Transcribing '$STEM' to MIDI with MuScriptor..."
+  muscriptor transcribe --model large --instruments "$STEM" "$DEST/$STEM.wav" -o "$WORKDIR/raw.mid"
+
+  echo "==> Adding velocity + detected tempo..."
+  # Pin 3.12: on 3.13 uv backtracks to an ancient numba whose llvmlite won't
+  # build. numpy comes in via librosa — forcing it here drags in a too-new
+  # numpy that breaks numba resolution. First run pulls librosa/numba, then caches.
+  uv run --python 3.12 --with pretty_midi --with soundfile --with librosa python3 - "$WORKDIR/raw.mid" "$DEST/$STEM.wav" "$DEST/$STEM.mid" <<'PYEOF'
+import sys
+import pretty_midi
+import soundfile as sf
+import numpy as np
+import librosa
+
+raw_mid, audio_path, out_mid = sys.argv[1:4]
+
+pm = pretty_midi.PrettyMIDI(raw_mid)
+audio, sr = sf.read(audio_path)
+if audio.ndim > 1:
+    audio = audio.mean(axis=1)
+audio = audio.astype(np.float32)
+
+# --- velocity from peak amplitude right after each onset ---
+window = int(0.03 * sr)  # 30ms
+peaks = []
+for inst in pm.instruments:
+    for note in inst.notes:
+        start = int(note.start * sr)
+        seg = audio[start:start + window]
+        peaks.append(np.abs(seg).max() if len(seg) else 0)
+peaks = np.array(peaks)
+lo, hi = np.percentile(peaks, 5), np.percentile(peaks, 95)
+
+# --- tempo from beat tracking on the isolated stem itself ---
+tempo, _ = librosa.beat.beat_track(y=audio, sr=sr)
+bpm = float(tempo) if np.isscalar(tempo) else float(tempo[0])
+print(f"Detected tempo: {bpm:.1f} BPM")
+
+# Rebuild the MIDI with the correct initial tempo, carrying over notes + velocity
+out_pm = pretty_midi.PrettyMIDI(initial_tempo=bpm)
+i = 0
+for inst in pm.instruments:
+    new_inst = pretty_midi.Instrument(program=inst.program, is_drum=inst.is_drum, name=inst.name)
+    for note in inst.notes:
+        scaled = np.clip((peaks[i] - lo) / (hi - lo + 1e-9), 0, 1)
+        vel = int(30 + scaled * 97)
+        new_inst.notes.append(pretty_midi.Note(velocity=vel, pitch=note.pitch, start=note.start, end=note.end))
+        i += 1
+    out_pm.instruments.append(new_inst)
+
+out_pm.write(out_mid)
+print("wrote", out_mid, "at", round(bpm, 1), "BPM")
+PYEOF
+
+  echo ""
+  echo "==> Done: $DEST"
+  ls -lh "$DEST"
+}
+
+if [ $# -lt 1 ]; then
+  usage
+  exit 1
+fi
+
+case "$1" in
+  ps)   cmd_ps ;;
+  kill) cmd_kill ;;
+  clean) shift; cmd_clean "${1:-}" ;;
+  help|-h|--help) usage ;;
+  *)    run_pipeline "$@" ;;
+esac
