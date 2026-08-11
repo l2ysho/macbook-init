@@ -46,7 +46,15 @@ fi
 # interactive license prompt. Accepting is a no-op if already accepted.
 
 log "Accepting Xcode license"
-sudo xcodebuild -license accept
+# Skip (and avoid the sudo password prompt) if the license for the installed
+# Xcode version was already accepted system-wide.
+accepted=$(defaults read /Library/Preferences/com.apple.dt.Xcode IDEXcodeVersionForAgreedToGMLicense 2>/dev/null)
+installed=$(xcodebuild -version 2>/dev/null | awk '/^Xcode/{print $2}')
+if [ -n "$accepted" ] && [ "$accepted" = "$installed" ]; then
+  echo "  - license already accepted"
+else
+  sudo xcodebuild -license accept
+fi
 
 # --- Repo location -------------------------------------------------------
 # When run locally (./init.sh), bin/ lives next to this script. When run via
@@ -100,13 +108,15 @@ log "Configuring git identity"
 if git config --global user.name &>/dev/null; then
   echo "  - user.name already set"
 else
-  git config --global user.name "Richard Solár"
+  read -rp "  git user.name: " git_name
+  [ -n "$git_name" ] && git config --global user.name "$git_name"
 fi
 
 if git config --global user.email &>/dev/null; then
   echo "  - user.email already set"
 else
-  git config --global user.email "solar.richard@gmail.com"
+  read -rp "  git user.email: " git_email
+  [ -n "$git_email" ] && git config --global user.email "$git_email"
 fi
 
 # --- Homebrew ----------------------------------------------------------
@@ -199,6 +209,27 @@ if ! grep -q "alias claude-or=" "$HOME/.zshrc" 2>/dev/null; then
   echo "alias claude-or='ANTHROPIC_BASE_URL=https://openrouter.ai/api ANTHROPIC_AUTH_TOKEN=\$OPENROUTER_API_KEY ANTHROPIC_API_KEY= ANTHROPIC_MODEL=\$OPENROUTER_MODEL CLAUDE_CODE_SKIP_FAST_MODE_ORG_CHECK=1 claude'" >> "$HOME/.zshrc"
 else
   echo "  - claude-or alias already in .zshrc"
+fi
+
+# gh-unreleased: list PRs merged since the last stable release.
+if ! grep -q "gh-unreleased()" "$HOME/.zshrc" 2>/dev/null; then
+  echo "  - adding gh-unreleased function to .zshrc"
+  cat >> "$HOME/.zshrc" <<'EOF'
+gh-unreleased() {
+  local rel tag date repo branch
+  rel=$(gh release list --exclude-pre-releases --limit 1 --json tagName,publishedAt --jq '.[0].tagName + " " + .[0].publishedAt')
+  tag=${rel%% *}
+  date=${rel##* }
+  repo=$(gh repo view --json nameWithOwner --jq .nameWithOwner)
+  branch=$(gh repo view --json defaultBranchRef --jq .defaultBranchRef.name)
+  gh pr list --state merged --limit 100 --search "merged:>=$date sort:updated-asc" \
+    --json number,title,headRefName,mergedAt \
+    --template '{{tablerow (color "default+u" "ID") (color "default+u" "TITLE") (color "default+u" "BRANCH") (color "default+u" "MERGED")}}{{range .}}{{tablerow (printf "#%v" .number | autocolor "green") .title (.headRefName | autocolor "cyan") (timeago .mergedAt)}}{{end}}'
+  echo "compare: https://github.com/$repo/compare/$tag...$branch"
+}
+EOF
+else
+  echo "  - gh-unreleased function already in .zshrc"
 fi
 
 # rm-history [n]: delete the last n commands (default 1) from atuin + zsh history.
