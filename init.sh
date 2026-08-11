@@ -259,6 +259,7 @@ FORMULAE=(
   xcodes
   ffmpeg
   mas
+  mole
 )
 
 CASKS=(
